@@ -58,6 +58,8 @@ mf <- eval(mf, parent.frame())    # Obtain the model.frame.
 #mf <- model.frame(formula)
 
 cor.type <- match.arg(cor.type, choices = c("R", "I", "shrink", "reducedrank"))
+if(cor.type == "reducedrank" & !is.null(weights))
+    warning("weight argument is currently ignored when cor.type = \"reducedrank\" ")
 
 if(missing(data)) # Only coerce to model frame if not specified by the user.
   data <- mf
@@ -184,9 +186,9 @@ if (is.empty.model(mt)) {
    if (cor.type == "reducedrank") {
        if(!is.numeric(num.factors))
            stop("num.factors must be supplied if cor.type is set to \"reducedreank\" ")
-       do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none"), silent = TRUE)
+       do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none", scores = "regression"), silent = TRUE)
        if(inherits(do_FA, "try-error"))
-           do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none", nstart = 100), silent = TRUE)
+           do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none", nstart = 100, scores = "regression"), silent = TRUE)
        
        rawsds <- sqrt(diag(cov(z$residuals))) 
        est_correlation_matrix <- (tcrossprod(do_FA$loadings) + diag(x = do_FA$uniquenesses)) #* (rawsds %o% rawsds)
