@@ -9,7 +9,7 @@
   directly unless by experienced users.
 }
 \usage{
-manylm.fit(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, \dots)
+manylm.fit(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, num.factors = NULL, \dots)
 manylm.wfit(x, y, w, offset = NULL, tol=1.0e-010, singular.ok = TRUE, \dots)
 }
 \arguments{
@@ -25,6 +25,9 @@ manylm.wfit(x, y, w, offset = NULL, tol=1.0e-010, singular.ok = TRUE, \dots)
     is 1.0e-050.}
   \item{singular.ok}{logical. If \code{FALSE}, a singular model is an
     error.}
+  \item{num.factors}{can be safely ignored as it is not actually used anywhere
+  in the function.
+  }
   \item{\dots}{currently disregarded.}
 }
 % \details{}
