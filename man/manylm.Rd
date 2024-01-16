@@ -113,7 +113,7 @@ This parameter is merely stored in \code{manylm}, and will be used as the defaul
   and \code{resample}) see \code{\link{summary.manylm}} or
   \code{\link{anova.manylm}}.
 
-If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the argument \code{num.factors}. The working horse function for the is \code{\link{MASS::factanal}}, and we refer the reader to that function in the \code{MASS} package for more details. Note this function will also make a check of whether \code{num.factors} is valid relative to the number of responses.
+If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the argument \code{num.factors}. The working horse function for this is the \code{factanal} function within the \code{MASS} package, and we refer the reader to that function for more details. Note this function will also make a check of whether \code{num.factors} is valid relative to the number of responses.
 }
 \value{
  \code{manylm} returns an object of \code{c("manylm", "mlm", "lm")} for multivariate
@@ -134,7 +134,7 @@ A \code{manylm} object is a list containing at least the following components:
   \item{cor.type}{the \code{cor.type} argument supplied.}
   \item{shrink.param}{the shrink parameter to be used in subsequent inference.}
   \item{est.cor}{(estimated) correlation matrix between responses.}
-  \item{est.cor.FA}{If \code{cor.type = "reducedrank"}, then this is the result from the call to \code{\link{MASS::factanal}}.}
+  \item{est.cor.FA}{If \code{cor.type = "reducedrank"}, then this is the result from the call to \code{factanal}.}
   %\item{resample}{the \code{resample} argument supplied.}
   %\item{nBoot}{the \code{nBoot} argument supplied.}
   \item{call}{the matched call.}

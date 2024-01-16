@@ -131,7 +131,7 @@ matrix under the fitted model. Possible values are: \cr
 
 If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink.param} either through the argument or by internal estimation. The working horse function for the internal estimation is \code{\link{ridgeParamEst}}, which is based on cross-validation (Warton 2008). The validation groups are chosen by random assignment, so some slight variation in the estimated values may be observed in repeat analyses. See \code{\link{ridgeParamEst}} for more details. The shrinkage parameter can be any value between 0 and 1 (0="I" and 1="R", values closer towards 0 indicate more shrinkage towards "I").
 
-If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the argument \code{num.factors}. The working horse function for the is \code{\link{MASS::factanal}}, and we refer the reader to that function in the \code{MASS} package for more details. Note this function will also make a check of whether \code{num.factors} is valid relative to the number of responses.
+If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the argument \code{num.factors}. The working horse function for this is the \code{factanal} function within the \code{MASS} package, and we refer the reader to that function for more details. Note this function will also make a check of whether \code{num.factors} is valid relative to the number of responses.
 }
 
 \value{
@@ -174,7 +174,7 @@ If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the arg
   \item{AICsum}{the sum of the AIC's over all variables.}
   \item{shrink.param}{the shrink parameter to be used in subsequent inference.}
   \item{est.cor}{(estimated) correlation matrix between responses.}
-  \item{est.cor.FA}{If \code{cor.type = "reducedrank"}, then this is the result from the call to \code{\link{MASS::factanal}}.}
+  \item{est.cor.FA}{If \code{cor.type = "reducedrank"}, then this is the result from the call to \code{factanal}.}
   \item{call}{the matched call.}
   \item{terms}{the \code{\link{terms}} object used.}
   \item{rank}{the numeric rank of the fitted linear model.}
