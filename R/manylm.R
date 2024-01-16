@@ -228,7 +228,7 @@ return(z)
 ############################################################################
 ## manylm.fit                                                              #
 ############################################################################
-manylm.fit <- function(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, ...) 
+manylm.fit <- function(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, num.factors = NULL, ...) 
 {
     y <- as.matrix( unabund(y) )
     if (is.null(n <- nrow(x)))
