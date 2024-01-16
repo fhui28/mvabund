@@ -20,6 +20,9 @@ anova.manylm <- function(object,
                         bootID=NULL) {
     if(!any(class(object)=="manylm"))
        stop("The function 'anova.manylm' can only be used for a manylm object.")
+    if (cor.type=="reducedrank") {
+        stop("Currently anova.manylm does not support a reduced-rank correlation matrix for the responses. Sorry!")
+        }
 
 #    nBoot=nBoot+1 #this function has been coded differently so need to crop one off.
 

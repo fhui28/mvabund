@@ -32,6 +32,9 @@ summary.manyglm <- function(object,
     if (show.warning==TRUE) warn=1
     else warn=0
 
+    if (cor.type=="reducedrank") {
+        stop("Currently summary.manyglm does not support a reduced-rank correlation matrix for the abundances. Sorry!")
+        }
     if (cor.type != "I" & test == "LR") {
        warning("The likelihood ratio test can only be used if correlation matrix of the abundances is is assumed to be the Identity matrix. The Wald Test will be used.")
        test <- "Wald"

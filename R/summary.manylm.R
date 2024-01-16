@@ -29,6 +29,9 @@ summary.manylm <- function(object,
 
     if(!any(class(object)=="manylm"))
        stop("The function 'summary.manylm' can only be used for a manylm object.")
+    if (cor.type=="reducedrank") {
+        stop("Currently anova.manylm does not support a reduced-rank correlation matrix for the responses. Sorry!")
+        }
 
     ######## Construct Summary Input Arguments ########
     nRows = nrow(object$y)
