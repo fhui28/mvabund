@@ -7,7 +7,7 @@
 \usage{
 manyglm(formula, family="negative.binomial", composition=FALSE, data=NULL, subset=NULL,
     na.action=options("na.action"), K=1, theta.method = "PHI", model = FALSE,
-    x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL,
+    x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, num.factors=NULL,
     tol=sqrt(.Machine$double.eps), maxiter=25, maxiter2=10,
     show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE,
     show.warning=FALSE, offset, \dots )
@@ -59,9 +59,9 @@ manyglm(formula, family="negative.binomial", composition=FALSE, data=NULL, subse
   returned.
   }
   \item{cor.type}{the structure imposed on the estimated correlation
-  matrix under the fitted model. Can be "I"(default), "shrink", or "R".
-  See Details. This parameter is merely stored in \code{manyglm}, and
-  will be used as the default value for \code{cor.type} in subsequent
+  matrix under the fitted model. Can be "I"(default), "shrink", "R", 
+  or "reducedrank". See Details. This parameter is merely stored in \code{manyglm}, 
+  and will be used as the default value for \code{cor.type} in subsequent
   functions for inference.
   }
   \item{shrink.param}{
@@ -70,6 +70,12 @@ manyglm(formula, family="negative.binomial", composition=FALSE, data=NULL, subse
   validation-penalised normal likelihood as in Warton (2008). The parameter
   value is stored as an attribute of the \code{manyglm} object, and will be
   used in subsequent functions for inference.
+  }
+  \item{num.factors}{
+  number of factors to be used if \code{cor.type="reducedrank"}. Equivalently, this 
+  can be used as the proposed rank to reduce for the reduced-rank structure of the
+  estimated correlation matrix. The parameter value is stored as an attribute of the 
+  \code{manyglm} object, and will be used in subsequent functions for inference.
   }
   \item{tol}{the tolerance used in estimation.}
   \item{maxiter}{maximum allowed iterations in the weighted least square estimation of beta. The default value is 25.}
@@ -119,10 +125,13 @@ In negative binomial regression, the overdispersion parameter (\code{theta}) is 
 \code{cor.type} is the structure imposed on the estimated correlation
 matrix under the fitted model. Possible values are: \cr
 \code{"I"}(default) = independence is assumed (correlation matrix is the identity) \cr
-\code{"shrink"} = sample correlation matrix is shrunk towards I to improve its stability. \cr
 \code{"R"} = unstructured correlation matrix is used.  (Only available when N>p.)
+\code{"shrink"} = sample correlation matrix is shrunk towards I to improve its stability. \cr
+\code{"reducedrank"} = rank-reduced correlation matrix. \cr
 
 If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink.param} either through the argument or by internal estimation. The working horse function for the internal estimation is \code{\link{ridgeParamEst}}, which is based on cross-validation (Warton 2008). The validation groups are chosen by random assignment, so some slight variation in the estimated values may be observed in repeat analyses. See \code{\link{ridgeParamEst}} for more details. The shrinkage parameter can be any value between 0 and 1 (0="I" and 1="R", values closer towards 0 indicate more shrinkage towards "I").
+
+If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the argument \code{num.factors}. The working horse function for the is \code{\link{MASS::factanal}}, and we refer the reader to that function in the \code{MASS} package for more details. Note this function will also make a check of whether \code{num.factors} is valid relative to the number of responses.
 }
 
 \value{
@@ -164,6 +173,8 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
     maximized log-likelihood plus twice the number of coefficients.}
   \item{AICsum}{the sum of the AIC's over all variables.}
   \item{shrink.param}{the shrink parameter to be used in subsequent inference.}
+  \item{est.cor}{(estimated) correlation matrix between responses.}
+  \item{est.cor.FA}{If \code{cor.type = "reducedrank"}, then this is the result from the call to \code{\link{MASS::factanal}}.}
   \item{call}{the matched call.}
   \item{terms}{the \code{\link{terms}} object used.}
   \item{rank}{the numeric rank of the fitted linear model.}

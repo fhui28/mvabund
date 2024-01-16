@@ -4,16 +4,17 @@
 # maybe we want to add some more specific things later on                  #
 # 05-Jan-2010
 ###############################################################################
-print.manylm <-
-function (x, digits = max(3, getOption("digits") - 3), ...)
+print.manylm <- function (x, digits = max(3, getOption("digits") - 3), ...)
 {
-    cat("\nCall:\n", deparse(x$call), "\n\n", sep = "")
+    cat("\nCall:\n", deparse(x$call), "\n", sep = "")
+    cat("Correlation type:", deparse(x$cor.type), "\n\n", sep = "")
+
     if (length(coef(x))) {
-        cat("Coefficients:\n")
+        cat("\nCoefficients:\n")
         print.default(format(coef(x), digits = digits), print.gap = 2,
           quote = FALSE)
     }
-    else cat("No coefficients\n")
+    else cat("\nNo coefficients\n")
     cat("\n")
     if (nchar(mess <- naprint(x$na.action))) 
         cat("  (", mess, ")\n", sep = "")
@@ -41,6 +42,7 @@ manylm <- function (formula,
                     test="LR",
                     cor.type= "I",
                     shrink.param=NULL,
+                    num.factors=NULL,
                     tol=1.0e-5,
                     ...) {
 ret.x <- x
@@ -54,6 +56,8 @@ mf$drop.unused.levels <- TRUE
 mf[[1]] <- as.name("model.frame")
 mf <- eval(mf, parent.frame())    # Obtain the model.frame.
 #mf <- model.frame(formula)
+
+cor.type <- match.arg(cor.type, choices = c("R", "I", "shrink", "reducedrank"))
 
 if(missing(data)) # Only coerce to model frame if not specified by the user.
   data <- mf
@@ -125,7 +129,7 @@ if (is.empty.model(mt)) {
     # new codes added here to deal with w
    if (is.null(w)){ 
        ### Fit the multivariate LM.
-       z <- manylm.fit(x=X, y=abundances, offset = offset, singular.ok = singular.ok, ...)
+       z <- manylm.fit(x=X, y=abundances, offset = offset, singular.ok = singular.ok, num.factors = num.factors, ...)
        w   <- rep(1, times=N)
        ok <- w!=0
        wIsNull <- 1
@@ -151,29 +155,52 @@ if (is.empty.model(mt)) {
       if (is.null(shrink.param)) {
          tX <- matrix(1, NROW(abundances), 1)
          shrink.param <- ridgeParamEst(dat=z$residuals, X=tX, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
-      }	 
+        }
       # to simplify later computation
       if(shrink.param == 0) cor.type <- "I"
-      else if(shrink.param == 1) cor.type <- "R"      
-      else if (abs(shrink.param)>1)
+      if(shrink.param == 1) cor.type <- "R"      
+      if (abs(shrink.param)>1 | shrink.param < 0)
           stop("the absolute 'shrink.param' should be between 0 and 1")
-    } else if (cor.type == "I") {
-        shrink.param <- NULL 
-    } else if (cor.type == "R") {
+      
+      est_correlation_matrix <- rcalc(dat = z$residuals, cor.type = cor.type, param = shrink.param)$R        
+      } 
+   if (cor.type == "I") {
+       shrink.param <- 0
+       
+       est_correlation_matrix <- rcalc(dat = z$residuals, cor.type = cor.type)$R
+       }
+   if (cor.type == "R") {
         if (nrow(abundances) <= ncol(abundances))
           stop("An unstructured correlation matrix should only be used if N>>number of variables.") 
         if(nrow(abundances) < 2 * ncol(abundances)) 
-          warning("the calculated p-values might be unreliable as the number of cases 
-                   is not much larger than the number of variables") 
+          warning("the calculated p-values might be unreliable as the number of cases is not much larger than the number of variables") 
       shrink.param <- NULL
-   }
+      
+      est_correlation_matrix <- rcalc(dat = z$residuals, cor.type = cor.type)$R
+      }
 
+   if (cor.type == "reducedrank") {
+       if(!is.numeric(num.factors))
+           stop("num.factors must be supplied if cor.type is set to \"reducedreank\" ")
+       do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none"), silent = TRUE)
+       if(inherits(do_FA, "try-error"))
+           do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none", nstart = 100), silent = TRUE)
+       
+       rawsds <- sqrt(diag(cov(z$residuals))) 
+       est_correlation_matrix <- (tcrossprod(do_FA$loadings) + diag(x = do_FA$uniquenesses)) #* (rawsds %o% rawsds)
+       rm(rawsds)
+      }
 }
 ################################### END Estimation #############################
 # parameters that are needed for tests in anova.manylm and summary.manylm.
 z$test          <- test
 z$cor.type      <- cor.type
 z$shrink.param  <- shrink.param
+z$num.factors  <- num.factors
+z$est.cor  <- est_correlation_matrix
+rownames(z$est.cor) <- colnames(z$est.cor) <- colnames(z$residuals)
+if(cor.type == "reducedrank")
+    z$est.cor.FA  <- do_FA
 z$call          <- cl
 z$terms         <- mt
 z$data          <- data
@@ -197,7 +224,7 @@ return(z)
 ############################################################################
 ## manylm.fit                                                              #
 ############################################################################
-manylm.fit <- function(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, ...) 
+manylm.fit <- function(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, num.factors=NULL, ...) 
 {
     y <- as.matrix( unabund(y) )
     if (is.null(n <- nrow(x)))

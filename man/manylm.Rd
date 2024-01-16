@@ -15,7 +15,7 @@ manylm(
    na.action=options("na.action"),  method="qr", model=FALSE, 
    x=TRUE, y=TRUE, qr=TRUE, singular.ok=TRUE, contrasts=NULL, 
    offset, test="LR" , cor.type= "I", shrink.param=NULL, 
-   tol=1.0e-5, \dots)
+   num.factors=NULL, tol=1.0e-5, \dots)
 }
 \arguments{
   \item{formula}{
@@ -72,10 +72,20 @@ manylm(
   \item{test}{choice of test statistic. Can be one of "LR" (default) = likelihood ratio statistic "F" = Lawley-Hotelling trace statistic \code{NULL} = no test
 This parameter is merely stored in \code{manylm}, and will be used as the default value of \code{test} in subsequent functions for inference.}
 
-\item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See anova.manylm for details of its usage. This parameter will be used as the default value of \code{cor.type} in subsequent functions for inference.}
+  \item{cor.type}{the structure imposed on the estimated correlation
+  matrix under the fitted model. Can be "I"(default), "shrink", "R", 
+  or "reducedrank". See anova.manylm for details of its usage. This parameter is stored in \code{manylm}, 
+  and will be used as the default value for \code{cor.type} in subsequent
+  functions for inference.}
 
 \item{shrink.param}{shrinkage parameter to be used if \code{cor.type="shrink"}. This parameter will be used as the default value of \code{shrink.param} in subsequent functions for inference.}
 
+  \item{num.factors}{
+  number of factors to be used if \code{cor.type="reducedrank"}. Equivalently, this 
+  can be used as the proposed rank to reduce for the reduced-rank structure of the
+  estimated correlation matrix. The parameter value is stored as an attribute of the 
+  \code{manyglm} object, and will be used in subsequent functions for inference.
+  }
 \item{tol}{the tolerance used in estimations.}
 \item{\dots}{additional arguments to be passed to the low level regression fitting functions (see below).}
 }
@@ -102,6 +112,8 @@ This parameter is merely stored in \code{manylm}, and will be used as the defaul
   For details on arguments related to hypothesis testing (such as \code{cor.type}
   and \code{resample}) see \code{\link{summary.manylm}} or
   \code{\link{anova.manylm}}.
+
+If \code{cor.type=="reducedrank"}, a numerical value must be assigned to the argument \code{num.factors}. The working horse function for the is \code{\link{MASS::factanal}}, and we refer the reader to that function in the \code{MASS} package for more details. Note this function will also make a check of whether \code{num.factors} is valid relative to the number of responses.
 }
 \value{
  \code{manylm} returns an object of \code{c("manylm", "mlm", "lm")} for multivariate
@@ -120,8 +132,11 @@ A \code{manylm} object is a list containing at least the following components:
   \item{txX}{the matrix \code{(t(x)\%*\%x)}.}
   \item{test}{the \code{test} argument supplied.}
   \item{cor.type}{the \code{cor.type} argument supplied.}
-  \item{resample}{the \code{resample} argument supplied.}
-  \item{nBoot}{the \code{nBoot} argument supplied.}
+  \item{shrink.param}{the shrink parameter to be used in subsequent inference.}
+  \item{est.cor}{(estimated) correlation matrix between responses.}
+  \item{est.cor.FA}{If \code{cor.type = "reducedrank"}, then this is the result from the call to \code{\link{MASS::factanal}}.}
+  %\item{resample}{the \code{resample} argument supplied.}
+  %\item{nBoot}{the \code{nBoot} argument supplied.}
   \item{call}{the matched call.}
   \item{terms}{the \code{terms} object used.}
   % \item{contrasts}{(only where relevant) the contrasts used.}

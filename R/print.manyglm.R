@@ -16,8 +16,9 @@ print.manyglm <- function(x,
 #	} else if (substr(	family[1], 1, 17)=="Negative Binomial"){
 #		print(negative.binomial(link=x$family$link))
 #	} else
-  print(x$family)
-
+  cat("Family:", deparse(x$family), "\n", sep = "")
+  cat("Correlation type:", deparse(x$cor.type), "\n\n", sep = "")
+  
   if (x$show.coef==TRUE) {
      if (length(coef(x))) {
         cat("Coefficients")

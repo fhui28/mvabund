@@ -17,6 +17,7 @@ manyglm <- function (formula,
     qr = TRUE,
     cor.type= "I",
     shrink.param=NULL,
+    num.factors=NULL,
     tol=sqrt(.Machine$double.eps),
     maxiter=25,
     maxiter2=10,
@@ -79,6 +80,8 @@ if ( is.character(family) ) {
 else stop("'family' not recognised. See ?manyglm for currently available options.")
 
 #stop ("Current manyglm only supports the following link function for binary binomial regression: 'logit', 'cloglog'.")
+cor.type <- match.arg(cor.type, choices = c("R", "I", "shrink", "reducedrank"))
+    
 ret.x <- x
 ret.y <- y
 ret.qr <- qr
@@ -272,24 +275,43 @@ else {
 # New codes added for estimating ridge parameter
     if (cor.type=="shrink") {
         if (is.null(shrink.param)) {
-        tX <- matrix(1, NROW(X), 1)
-            shrink.param <- ridgeParamEst(dat=z$residuals, X=tX, only.ridge=TRUE, tol=tol)$ridgeParameter
-    }
+            tX <- matrix(1, NROW(X), 1)
+            shrink.param <- ridgeParamEst(dat=z$residuals, X=tX, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
+            }
         # to simplify later computation
         if(shrink.param == 0) cor.type <- "I"
-        else if(shrink.param == 1) cor.type <- "R"
-        else if (abs(shrink.param)>1)
+        if(shrink.param == 1) cor.type <- "R"
+        if (abs(shrink.param)>1 | shrink.param < 0)
              stop("the absolute 'shrink.param' should be between 0 and 1")
-    }
-    else if (cor.type == "I") shrink.param <- 0
-    else if (cor.type == "R") {
+        
+        est_correlation_matrix <- rcalc(dat = z$residuals, cor.type = cor.type, param = shrink.param)$R        
+        }
+    if (cor.type == "I") {
+        shrink.param <- 0
+        
+        est_correlation_matrix <- rcalc(dat = z$residuals, cor.type = cor.type)$R
+        }
+    if (cor.type == "R") {
          if (nrow(abundances)<=ncol(abundances))
              stop("An unstructured correlation matrix should only be used if N>>number of variables.")
          if(nrow(abundances) < 2*ncol(abundances))
              warning("the calculated p-values might be unreliable as the number of cases is not much larger than the number of variables")
          shrink.param <- 1
-    }
+         
+         est_correlation_matrix <- rcalc(dat = z$residuals, cor.type = cor.type)$R
+         }
+    if (cor.type == "reducedrank") {
+        if(!is.numeric(num.factors))
+            stop("num.factors must be supplied if cor.type is set to \"reducedreank\" ")
+        do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none"), silent = TRUE)
+        if(inherits(do_FA, "try-error"))
+            do_FA <- try(factanal(x = z$residuals, factors = num.factors, rotation = "none", nstart = 100), silent = TRUE)
 
+        rawsds <- sqrt(diag(cov(z$residuals))) 
+        est_correlation_matrix <- (tcrossprod(do_FA$loadings) + diag(x = do_FA$uniquenesses)) #* (rawsds %o% rawsds)
+        rm(rawsds)
+        }
+    
     # parameters that are needed for tests in anova.manylm and summary.manylm.
     dimnames(z$fitted.values) <- list(labObs, labAbund)
     dimnames(z$coefficients) <- list(colnames(X), labAbund)
@@ -320,6 +342,11 @@ else {
     z$theta.method<- theta.method
     z$cor.type  <- cor.type
     z$shrink.param  <- shrink.param
+    z$num.factors  <- num.factors
+    z$est.cor  <- est_correlation_matrix
+    rownames(z$est.cor) <- colnames(z$est.cor) <- colnames(z$residuals)
+    if(cor.type == "reducedrank")
+        z$est.cor.FA  <- do_FA
     z$call      <- cl
     z$terms     <- mt
     z$assign    <- assign
